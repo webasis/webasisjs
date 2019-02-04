@@ -2,6 +2,9 @@ const UnitSep = "\x1f"
 
 export default {
 	client(url, token) {
+		if (url == "") {
+			return
+		}
 		let onAuth = () => {}
 		let onIErr = () => {}
 		let onBan = () => {}
@@ -19,10 +22,10 @@ export default {
 			call(method, ...args) {
 				return new Promise((resolve, reject) => {
 					fetch(url, {
-						method: 'POST',
-						body: [token, method, ...args].join(UnitSep),
-						mode: 'cors',
-					}).then(resp => resp.text())
+							method: 'POST',
+							body: [token, method, ...args].join(UnitSep),
+							mode: 'cors',
+						}).then(resp => resp.text())
 						.then(raw => {
 							let data = raw.split(UnitSep)
 							let status = data[0]

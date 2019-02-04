@@ -1,33 +1,35 @@
 import ReconnectingWebSocket from "./reconnecting-websocket";
-import kv from "./kv"
 
-function client(url,token) {
+function client(url, token) {
+	if (url == "") {
+		return
+	}
 	let ws = new ReconnectingWebSocket(url, null, {
 		maxReconnectInterval: 3000,
 		reconnectDecay: 1.0,
 	});
 	let connected = false;
-	var onMessage = (e)=>{
-		console.log("default onMessage:",e)
+	var onMessage = (e) => {
+		console.log("default onMessage:", e)
 	};
-	var onOpen = ()=>{};
+	var onOpen = () => {};
 
-	function getOnMessage() {return onMessage}
-	function getOnOpen() {return onOpen}
+	function getOnMessage() {
+		return onMessage
+	}
+
+	function getOnOpen() {
+		return onOpen
+	}
 
 
-	let send = (method,topic,...metas)=>{
-		console.log("send:",[method,topic,...metas].join("\x1F"))
-		if (data.length == 0) {
-			ws.send([method,topic].join("\x1F"))
-		} else {
-			ws.send([method,topic,data.join("\x1F")].join("\x1F"))
-		}
+	let send = (...raw) => {
+		ws.send(raw.join("\x1F"))
 	}
 
 	ws.onopen = () => {
 		connected = true;
-		send("A",token)
+		send("A", token);
 		(getOnOpen())();
 	};
 	ws.onclose = () => {
@@ -35,7 +37,7 @@ function client(url,token) {
 	};
 	ws.onmessage = evt => {
 		const raw = evt.data.split("\x1F")
-		let method,topic = ""
+		let method, topic = ""
 		let metas = [];
 		if (raw.length > 0) {
 			method = raw[0];
@@ -47,12 +49,20 @@ function client(url,token) {
 			metas = raw.slice(2);
 		}
 
-		(getOnMessage())({method,topic,metas})
+		if (method == "P") {
+			send("p");
+			return
+		}
+
+		(getOnMessage())({
+			method,
+			topic,
+			metas
+		})
 	};
 
 	return {
-		setOnMessage: function(fn) {
-			console.log("set on event")
+		setOnMessage: function (fn) {
 			onMessage = fn;
 		},
 		AfterOpen(fn) {
@@ -63,6 +73,14 @@ function client(url,token) {
 		},
 		connected: () => {
 			return connected;
+		},
+		send,
+		close: () => {
+			ws.close();
 		}
 	};
+}
+
+export default {
+	client
 }
