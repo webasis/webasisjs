@@ -12,16 +12,12 @@ function client(url, token) {
 	var onMessage = (e) => {
 		console.log("default onMessage:", e)
 	};
-	var onOpen = () => {};
 
 	function getOnMessage() {
 		return onMessage
 	}
 
-	function getOnOpen() {
-		return onOpen
-	}
-
+	let subTopics = [];
 
 	let send = (...raw) => {
 		ws.send(raw.join("\x1F"))
@@ -30,7 +26,9 @@ function client(url, token) {
 	ws.onopen = () => {
 		connected = true;
 		send("A", token);
-		(getOnOpen())();
+		subTopics.forEach(topic => {
+			send("S", topic)
+		})
 	};
 	ws.onclose = () => {
 		connected = false;
@@ -49,34 +47,44 @@ function client(url, token) {
 			metas = raw.slice(2);
 		}
 
-		if (method == "P") {
-			send("p");
+		if (method == "p") {
+			send("P");
 			return
 		}
 
-		(getOnMessage())({
-			method,
-			topic,
-			metas
-		})
+		if (method == "t") {
+			if (!subTopics.includes(topic)) {
+				send("U", topic);
+				return
+			}
+			(getOnMessage())({
+				topic,
+				metas
+			})
+		}
 	};
 
 	return {
-		setOnMessage: function (fn) {
+		on: function (fn) { // { topic,metas}
 			onMessage = fn;
 		},
-		AfterOpen(fn) {
-			onOpen = fn;
+		sub(...topics) {
+			subTopics = topics;
 			if (connected) {
-				fn();
+				subTopics.forEach(topic => {
+					send("S", topic)
+				})
 			}
 		},
-		connected: () => {
+		connected() {
 			return connected;
 		},
 		send,
-		close: () => {
-			ws.close();
+		unsub() {
+			subTopics.forEach(topic => {
+				send("U", topic)
+			})
+			subTopics = [];
 		}
 	};
 }
