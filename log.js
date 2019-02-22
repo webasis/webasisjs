@@ -73,6 +73,13 @@ function log(sync, rpc, id) {
     });
     sync.sub(TOPIC);
 
+    function gc() {
+        kv.map((k) => {
+            if (k.startsWith('log@') || (k.startsWith('log:') && !k.startsWith(`log:${rpc.name()}@`))) {
+                kv.rm(k)
+            }
+        })
+    }
     return {
         changes(cb) {
             onChanges = cb;
@@ -81,7 +88,10 @@ function log(sync, rpc, id) {
         close() {
             upr.close();
             sync.unsub();
-        }
+            setTimeout(() => {
+                gc()
+            }, 0)
+        },
     }
 }
 
