@@ -19,6 +19,14 @@ export default {
 			setOnBan(fn) {
 				onBan = fn
 			},
+			name() {
+				const items = atob(token).split("\x1f");
+				let name = ""
+				if (items.length > 0) {
+					name = items[0]
+				}
+				return name
+			},
 			call(method, ...args) {
 				return new Promise((resolve, reject) => {
 					fetch(url, {
