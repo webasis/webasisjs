@@ -33,7 +33,7 @@ function log(sync, rpc, id) {
     upr = updater(done => {
         (async () => {
             try {
-                let resp = await rpc.call("log/get", id, logs.length, "1");
+                let resp = await rpc.call("log/get", id, "" + logs.length, "10000", "" + 1024 * 10);
                 logs = logs.concat(resp.rets);
                 save();
                 if (logs.length < remote.line) {
