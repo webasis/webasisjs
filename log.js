@@ -1,7 +1,7 @@
 import kv from "@/api/webasisjs/kv";
 import updater from "@/api/webasisjs/updater";
 
-export default function log(sync, rpc, id) {
+function log(sync, rpc, id) {
     const TOPIC = `log:${id}`;
 
     let logs = [];
@@ -33,10 +33,10 @@ export default function log(sync, rpc, id) {
     upr = updater(done => {
         (async () => {
             try {
-                let resp = await rpc.call("log/get", id, logs.length, "1");
+                let resp = await rpc.call("log/get", id, logs.length, "100");
                 logs = logs.concat(resp.rets);
                 save();
-                if (logs.length < remote.length) {
+                if (logs.length < remote.line) {
                     upr.update();
                 }
             } catch ({
@@ -69,7 +69,7 @@ export default function log(sync, rpc, id) {
                 save();
             }
         }
-        updater.update();
+        upr.update();
     });
     sync.sub(TOPIC);
 
@@ -80,6 +80,9 @@ export default function log(sync, rpc, id) {
         },
         close() {
             upr.close();
+            sync.unsub();
         }
     }
 }
+
+export default log;
